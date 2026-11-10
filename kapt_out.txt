@@ -1,0 +1,115 @@
+Initialized native services in: /Users/eliagismondi/.gradle/native
+Initialized jansi services in: /Users/eliagismondi/.gradle/native
+The client will now receive all logging from the daemon (pid: 31659). The daemon log file: /Users/eliagismondi/.gradle/daemon/9.6.0/daemon-31659.out.log
+Starting 21st build in daemon [uptime: 2 hrs 11 mins 26.189 secs, performance: 92%, GC rate: 0.00/s, heap usage: 7% of 2 GiB]
+Using 8 worker leases.
+Operational build model parameters: {cachingModelBuilding=false, configurationCache=true, configurationCacheDisabledReason=null, configurationCacheParallelLoad=true, configurationCacheParallelStore=false, configureOnDemand=false, invalidateCoupledProjects=false, isolatedProjects=false, isolatedProjectsDiagnostics=false, modelAsProjectDependency=false, modelBuilding=false, parallelModelBuilding=false, parallelProjectConfiguration=false, parallelProjectExecution=false, resilientModelBuilding=false, vintage=false}
+Encryption key source: default Gradle keystore (pkcs12)
+Now considering [/Users/eliagismondi/AndroidStudioProjects/gestionalepersonale] as hierarchies to watch
+Reusing configuration cache.
+Now considering [/Users/eliagismondi/AndroidStudioProjects/gestionalepersonale] as hierarchies to watch
+Watching the file system is configured to be enabled if available
+File system watching is active
+Tasks to be executed: [task ':app:checkKotlinGradlePluginConfigurationErrors', task ':app:preBuild', task ':app:preDebugBuild', task ':app:generateDebugResources', task ':app:packageDebugResources', task ':app:processDebugNavigationResources', task ':app:parseDebugLocalResources', task ':app:generateDebugRFile', task ':app:kaptGenerateStubsDebugKotlin', task ':app:kaptDebugKotlin']
+Tasks that were excluded: []
+Resolve mutations for :app:checkKotlinGradlePluginConfigurationErrors (Thread[#926,Execution worker,5,main]) started.
+Resolve mutations for :app:preBuild (Thread[#927,Execution worker Thread 2,5,main]) started.
+:app:preBuild (Thread[#927,Execution worker Thread 2,5,main]) started.
+:app:checkKotlinGradlePluginConfigurationErrors (Thread[#926,Execution worker,5,main]) started.
+
+> Task :app:preBuild UP-TO-DATE
+Skipping task ':app:preBuild' as it has no actions.
+
+> Task :app:checkKotlinGradlePluginConfigurationErrors SKIPPED
+Skipping task ':app:checkKotlinGradlePluginConfigurationErrors' as task onlyIf 'errorDiagnostics are present' is false.
+Resolve mutations for :app:preDebugBuild (Thread[#927,Execution worker Thread 2,5,main]) started.
+Build 5adc8061-e675-42d0-8072-21551b88c6d1 is started
+:app:preDebugBuild (Thread[#927,Execution worker Thread 2,5,main]) started.
+
+> Task :app:preDebugBuild UP-TO-DATE
+Skipping task ':app:preDebugBuild' as it has no actions.
+Resolve mutations for :app:generateDebugResources (Thread[#927,Execution worker Thread 2,5,main]) started.
+Resolve mutations for :app:processDebugNavigationResources (Thread[#931,Execution worker Thread 6,5,main]) started.
+:app:generateDebugResources (Thread[#927,Execution worker Thread 2,5,main]) started.
+:app:processDebugNavigationResources (Thread[#931,Execution worker Thread 6,5,main]) started.
+
+> Task :app:generateDebugResources UP-TO-DATE
+Caching disabled for task ':app:generateDebugResources' because:
+  Build cache is disabled
+Skipping task ':app:generateDebugResources' as it is up-to-date.
+Resolve mutations for :app:packageDebugResources (Thread[#927,Execution worker Thread 2,5,main]) started.
+:app:packageDebugResources (Thread[#927,Execution worker Thread 2,5,main]) started.
+
+> Task :app:packageDebugResources UP-TO-DATE
+Caching disabled for task ':app:packageDebugResources' because:
+  Build cache is disabled
+Skipping task ':app:packageDebugResources' as it is up-to-date.
+
+> Task :app:processDebugNavigationResources UP-TO-DATE
+Caching disabled for task ':app:processDebugNavigationResources' because:
+  Build cache is disabled
+Skipping task ':app:processDebugNavigationResources' as it is up-to-date.
+Resolve mutations for :app:parseDebugLocalResources (Thread[#931,Execution worker Thread 6,5,main]) started.
+:app:parseDebugLocalResources (Thread[#931,Execution worker Thread 6,5,main]) started.
+
+> Task :app:parseDebugLocalResources UP-TO-DATE
+Caching disabled for task ':app:parseDebugLocalResources' because:
+  Build cache is disabled
+Skipping task ':app:parseDebugLocalResources' as it is up-to-date.
+Resolve mutations for :app:generateDebugRFile (Thread[#931,Execution worker Thread 6,5,main]) started.
+:app:generateDebugRFile (Thread[#931,Execution worker Thread 6,5,main]) started.
+
+> Task :app:generateDebugRFile UP-TO-DATE
+Caching disabled for task ':app:generateDebugRFile' because:
+  Build cache is disabled
+Skipping task ':app:generateDebugRFile' as it is up-to-date.
+Resolve mutations for :app:kaptGenerateStubsDebugKotlin (Thread[#931,Execution worker Thread 6,5,main]) started.
+:app:kaptGenerateStubsDebugKotlin (Thread[#931,Execution worker Thread 6,5,main]) started.
+
+> Task :app:kaptGenerateStubsDebugKotlin UP-TO-DATE
+Caching disabled for task ':app:kaptGenerateStubsDebugKotlin' because:
+  Build cache is disabled
+Skipping task ':app:kaptGenerateStubsDebugKotlin' as it is up-to-date.
+Resolve mutations for :app:kaptDebugKotlin (Thread[#931,Execution worker Thread 6,5,main]) started.
+:app:kaptDebugKotlin (Thread[#931,Execution worker Thread 6,5,main]) started.
+
+> Task :app:kaptDebugKotlin
+file or directory '/Users/eliagismondi/AndroidStudioProjects/gestionalepersonale/app/src/debug/kotlin', not found
+file or directory '/Users/eliagismondi/AndroidStudioProjects/gestionalepersonale/app/src/debug/java', not found
+file or directory '/Users/eliagismondi/AndroidStudioProjects/gestionalepersonale/app/src/debug/kotlin', not found
+file or directory '/Users/eliagismondi/AndroidStudioProjects/gestionalepersonale/app/src/debug/java', not found
+file or directory '/Users/eliagismondi/AndroidStudioProjects/gestionalepersonale/app/src/debug/kotlin', not found
+file or directory '/Users/eliagismondi/AndroidStudioProjects/gestionalepersonale/app/src/debug/java', not found
+file or directory '/Users/eliagismondi/AndroidStudioProjects/gestionalepersonale/app/src/main/kotlin', not found
+file or directory '/Users/eliagismondi/AndroidStudioProjects/gestionalepersonale/app/src/main/kotlin', not found
+file or directory '/Users/eliagismondi/AndroidStudioProjects/gestionalepersonale/app/src/main/kotlin', not found
+file or directory '/Users/eliagismondi/AndroidStudioProjects/gestionalepersonale/app/src/debug/java', not found
+file or directory '/Users/eliagismondi/AndroidStudioProjects/gestionalepersonale/app/src/main/kotlin', not found
+file or directory '/Users/eliagismondi/AndroidStudioProjects/gestionalepersonale/app/src/debug/kotlin', not found
+Caching disabled for task ':app:kaptDebugKotlin' because:
+  Build cache is disabled
+Task ':app:kaptDebugKotlin' is not up-to-date because:
+  Task has failed previously.
+The input changes require a full rebuild for incremental task ':app:kaptDebugKotlin'.
+Running kapt annotation processing using the Gradle Worker API
+Using workers NONE isolation mode to run kapt
+
+> Task :app:kaptDebugKotlin FAILED
+Build 5adc8061-e675-42d0-8072-21551b88c6d1 is closed
+
+FAILURE: Build failed with an exception.
+
+* What went wrong:
+Execution failed for task ':app:kaptDebugKotlin' (registered by plugin 'org.jetbrains.kotlin.android').
+> A failure occurred while executing org.jetbrains.kotlin.gradle.internal.KaptWithoutKotlincTask$KaptExecutionWorkAction
+
+* Try:
+> Run with --stacktrace option to get the stack trace.
+> Run with --debug option to get more log output.
+> Run with --scan to get full insights from a Build Scan (powered by Develocity).
+> Get more help at https://help.gradle.org.
+
+BUILD FAILED in 9s
+7 actionable tasks: 1 executed, 6 up-to-date
+Watched directory hierarchies: [/Users/eliagismondi/AndroidStudioProjects/gestionalepersonale]
+Configuration cache entry reused.

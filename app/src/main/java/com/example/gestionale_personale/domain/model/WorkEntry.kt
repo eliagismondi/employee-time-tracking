@@ -1,12 +1,11 @@
 package com.example.gestionale_personale.domain.model
 
-import java.sql.Timestamp
+import java.time.LocalDate
 
 data class WorkEntry(
-    val id: Int,
-    val employeeId: Int,
-    val date: Timestamp,
+    val id: String,
+    val employeeId: String,
+    val date: LocalDate,
     val workedMinutes: Int,
-    val notes: String?,
-    val worksite: String,
+    val notes: String? = null
 )
