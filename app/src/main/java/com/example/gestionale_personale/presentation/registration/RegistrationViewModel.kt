@@ -170,82 +170,60 @@ class RegistrationViewModel(
                 return@launch
             }
 
-            // Validation 2: Check for duplicates in the current form
-            val employeeCounts = validRows.groupingBy { it.employeeId }.eachCount()
-            if (employeeCounts.any { it.value > 1 }) {
-                _globalError.value = "Hai selezionato lo stesso dipendente più volte in questa registrazione."
-                _isSaving.value = false
-                return@launch
-            }
-
-            // Validation 3: Check for duplicates in DB and construct models
+            // Validation rimosse per permettere allo stesso dipendente di avere più turni nella stessa data
             val entriesToSave = mutableListOf<WorkEntry>()
-            var hasDbDuplicateError = false
 
             val updatedRows = currentRows.map { row ->
                 val isValidDirect = !row.isTimeRangeMode && (row.hours.isNotBlank() || row.minutes.isNotBlank())
                 val isValidTime = row.isTimeRangeMode && row.startTime.isNotBlank() && row.endTime.isNotBlank()
 
                 if (row.employeeId != null && (isValidDirect || isValidTime)) {
-                    // Check DB
-                    val existingEntry = workEntryRepository.getEntryByEmployeeAndDate(row.employeeId, date)
-                    if (existingEntry != null) {
-                        hasDbDuplicateError = true
-                        row.copy(error = "Registrazione già esistente per questa data.")
-                    } else {
-                        var totalMinutes = 0
-                        var finalStartTime: String? = null
-                        var finalEndTime: String? = null
+                    var totalMinutes = 0
+                    var finalStartTime: String? = null
+                    var finalEndTime: String? = null
 
-                        if (row.isTimeRangeMode) {
-                            finalStartTime = row.startTime
-                            finalEndTime = row.endTime
+                    if (row.isTimeRangeMode) {
+                        finalStartTime = row.startTime
+                        finalEndTime = row.endTime
 
-                            val startParts = row.startTime.split(":")
-                            val endParts = row.endTime.split(":")
+                        val startParts = row.startTime.split(":")
+                        val endParts = row.endTime.split(":")
 
-                            if (startParts.size == 2 && endParts.size == 2) {
-                                val startMins = (startParts[0].toIntOrNull() ?: 0) * 60 + (startParts[1].toIntOrNull() ?: 0)
-                                val endMins = (endParts[0].toIntOrNull() ?: 0) * 60 + (endParts[1].toIntOrNull() ?: 0)
+                        if (startParts.size == 2 && endParts.size == 2) {
+                            val startMins = (startParts[0].toIntOrNull() ?: 0) * 60 + (startParts[1].toIntOrNull() ?: 0)
+                            val endMins = (endParts[0].toIntOrNull() ?: 0) * 60 + (endParts[1].toIntOrNull() ?: 0)
 
-                                totalMinutes = if (endMins >= startMins) {
-                                    endMins - startMins
-                                } else {
-                                    // Crossed midnight
-                                    (24 * 60 - startMins) + endMins
-                                }
+                            totalMinutes = if (endMins >= startMins) {
+                                endMins - startMins
+                            } else {
+                                // Crossed midnight
+                                (24 * 60 - startMins) + endMins
                             }
-                        } else {
-                            val h = row.hours.toIntOrNull() ?: 0
-                            val m = row.minutes.toIntOrNull() ?: 0
-                            totalMinutes = (h * 60) + m
                         }
-
-                        entriesToSave.add(
-                            WorkEntry(
-                                id = UUID.randomUUID().toString(),
-                                employeeId = row.employeeId,
-                                date = date,
-                                workedMinutes = totalMinutes,
-                                notes = row.notes.takeIf { it.isNotBlank() },
-                                startTime = finalStartTime,
-                                endTime = finalEndTime
-                            )
-                        )
-                        row.copy(error = null)
+                    } else {
+                        val h = row.hours.toIntOrNull() ?: 0
+                        val m = row.minutes.toIntOrNull() ?: 0
+                        totalMinutes = (h * 60) + m
                     }
+
+                    entriesToSave.add(
+                        WorkEntry(
+                            id = UUID.randomUUID().toString(),
+                            employeeId = row.employeeId,
+                            date = date,
+                            workedMinutes = totalMinutes,
+                            notes = row.notes.takeIf { it.isNotBlank() },
+                            startTime = finalStartTime,
+                            endTime = finalEndTime
+                        )
+                    )
+                    row.copy(error = null)
                 } else {
                     row
                 }
             }
 
             _rows.value = updatedRows
-
-            if (hasDbDuplicateError) {
-                _globalError.value = "Alcuni dipendenti hanno già ore registrate per oggi. Risolvi gli errori e riprova."
-                _isSaving.value = false
-                return@launch
-            }
 
             // Save to DB
             if (entriesToSave.isNotEmpty()) {
