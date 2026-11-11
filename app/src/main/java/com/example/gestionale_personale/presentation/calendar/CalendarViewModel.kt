@@ -1,11 +1,13 @@
 package com.example.gestionale_personale.presentation.calendar
 
+import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.gestionale_personale.domain.model.Employee
 import com.example.gestionale_personale.domain.model.WorkEntry
 import com.example.gestionale_personale.domain.repository.EmployeeRepository
 import com.example.gestionale_personale.domain.repository.WorkEntryRepository
+import com.example.gestionale_personale.domain.usecase.PdfExportUseCase
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -13,6 +15,8 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
+import java.io.File
 import java.time.LocalDate
 import java.time.YearMonth
 
@@ -21,7 +25,9 @@ data class CalendarUiState(
     val selectedDate: LocalDate = LocalDate.now(),
     val entriesForSelectedDate: List<EntryWithEmployee> = emptyList(),
     val daysWithEntries: Set<LocalDate> = emptySet(),
-    val totalMinutesForSelectedDate: Int = 0
+    val totalMinutesForSelectedDate: Int = 0,
+    val isExporting: Boolean = false,
+    val exportedFile: File? = null
 )
 
 data class EntryWithEmployee(
@@ -36,6 +42,8 @@ class CalendarViewModel(
 
     private val _currentMonth = MutableStateFlow(YearMonth.now())
     private val _selectedDate = MutableStateFlow(LocalDate.now())
+    private val _isExporting = MutableStateFlow(false)
+    private val _exportedFile = MutableStateFlow<File?>(null)
 
     // Tutte le entries del mese corrente per evidenziare i giorni sul calendario
     private val monthEntries = _currentMonth.flatMapLatest { month ->
@@ -54,8 +62,18 @@ class CalendarViewModel(
         _selectedDate,
         monthEntries,
         selectedDateEntries,
-        employeeRepository.getAllEmployees()
-    ) { currentMonth, selectedDate, monthEntries, dayEntries, allEmployees ->
+        employeeRepository.getAllEmployees(),
+        _isExporting,
+        _exportedFile
+    ) { args: Array<Any?> ->
+        val currentMonth = args[0] as YearMonth
+        val selectedDate = args[1] as LocalDate
+        val monthEntries = args[2] as List<WorkEntry>
+        val dayEntries = args[3] as List<WorkEntry>
+        val allEmployees = args[4] as List<Employee>
+        val isExporting = args[5] as Boolean
+        val exportedFile = args[6] as File?
+
         val daysWithEntries = monthEntries.map { it.date }.toSet()
 
         val entriesWithEmployee = dayEntries.map { entry ->
@@ -72,7 +90,9 @@ class CalendarViewModel(
             selectedDate = selectedDate,
             entriesForSelectedDate = entriesWithEmployee,
             daysWithEntries = daysWithEntries,
-            totalMinutesForSelectedDate = totalMinutes
+            totalMinutesForSelectedDate = totalMinutes,
+            isExporting = isExporting,
+            exportedFile = exportedFile
         )
     }.stateIn(
         scope = viewModelScope,
@@ -94,5 +114,19 @@ class CalendarViewModel(
         if (YearMonth.from(date) != _currentMonth.value) {
             _currentMonth.value = YearMonth.from(date)
         }
+    }
+
+    fun exportDailyPdf(context: Context) {
+        viewModelScope.launch {
+            _isExporting.value = true
+            val useCase = PdfExportUseCase(workEntryRepository, employeeRepository, context)
+            val file = useCase.exportDailyReport(_selectedDate.value)
+            _exportedFile.value = file
+            _isExporting.value = false
+        }
+    }
+
+    fun onPdfShared() {
+        _exportedFile.value = null
     }
 }

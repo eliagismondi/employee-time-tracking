@@ -1,5 +1,6 @@
 package com.example.gestionale_personale.presentation.calendar
 
+import android.content.Intent
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -7,23 +8,26 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material.icons.filled.ArrowForward
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ArrowForward
+import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.core.content.FileProvider
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.gestionale_personale.domain.usecase.TimeUtils
 import com.example.gestionale_personale.presentation.AppViewModelProvider
-import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.format.TextStyle
 import java.util.Locale
@@ -34,6 +38,25 @@ fun CalendarScreen(
     viewModel: CalendarViewModel = viewModel(factory = AppViewModelProvider.Factory)
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    val context = LocalContext.current
+
+    // Observe when a file is ready to be exported
+    LaunchedEffect(uiState.exportedFile) {
+        uiState.exportedFile?.let { file ->
+            val uri = FileProvider.getUriForFile(
+                context,
+                "${context.packageName}.fileprovider",
+                file
+            )
+            val shareIntent = Intent(Intent.ACTION_SEND).apply {
+                type = "application/pdf"
+                putExtra(Intent.EXTRA_STREAM, uri)
+                addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+            }
+            context.startActivity(Intent.createChooser(shareIntent, "Condividi Report PDF"))
+            viewModel.onPdfShared()
+        }
+    }
 
     Scaffold(
         topBar = {
@@ -60,7 +83,7 @@ fun CalendarScreen(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 IconButton(onClick = { viewModel.onPreviousMonth() }) {
-                    Icon(Icons.Default.ArrowBack, contentDescription = "Mese precedente")
+                    Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Mese precedente")
                 }
 
                 val monthName = uiState.currentMonth.month.getDisplayName(TextStyle.FULL, Locale.ITALIAN)
@@ -72,7 +95,7 @@ fun CalendarScreen(
                 )
 
                 IconButton(onClick = { viewModel.onNextMonth() }) {
-                    Icon(Icons.Default.ArrowForward, contentDescription = "Mese successivo")
+                    Icon(Icons.AutoMirrored.Filled.ArrowForward, contentDescription = "Mese successivo")
                 }
             }
 
@@ -85,7 +108,7 @@ fun CalendarScreen(
                 onDateSelected = { viewModel.onDateSelected(it) }
             )
 
-            Divider(modifier = Modifier.padding(vertical = 8.dp))
+            HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
 
             // Day Details Header
             Row(
@@ -99,7 +122,8 @@ fun CalendarScreen(
                 Text(
                     text = formattedDate,
                     style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.weight(1f)
                 )
 
                 Text(
@@ -108,6 +132,19 @@ fun CalendarScreen(
                     color = MaterialTheme.colorScheme.primary,
                     fontWeight = FontWeight.Bold
                 )
+
+                if (uiState.totalMinutesForSelectedDate > 0) {
+                    IconButton(
+                        onClick = { viewModel.exportDailyPdf(context) },
+                        enabled = !uiState.isExporting
+                    ) {
+                        if (uiState.isExporting) {
+                            CircularProgressIndicator(modifier = Modifier.size(24.dp))
+                        } else {
+                            Icon(Icons.Default.Share, contentDescription = "Esporta PDF", tint = MaterialTheme.colorScheme.primary)
+                        }
+                    }
+                }
             }
 
             // Day Entries List
