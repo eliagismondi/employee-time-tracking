@@ -33,14 +33,15 @@ class PdfExportUseCase(
             EmployeeDailyEntry(
                 employeeName = name,
                 workedMinutes = entry.workedMinutes,
+                startTime = entry.startTime,
+                endTime = entry.endTime,
                 notes = entry.notes
             )
         }
 
         val summary = DailySummary(
             date = date,
-            entries = dailyEntries,
-            totalMinutes = entries.sumOf { it.workedMinutes }
+            entries = dailyEntries
         )
 
         return pdfGenerator.generateDailyReport(summary)
@@ -71,8 +72,7 @@ class PdfExportUseCase(
 
         val summary = MonthlySummary(
             month = month,
-            employeeSummaries = monthlyEntries,
-            totalCompanyMinutes = entries.sumOf { it.workedMinutes }
+            employeeSummaries = monthlyEntries
         )
 
         return pdfGenerator.generateMonthlyReport(summary)

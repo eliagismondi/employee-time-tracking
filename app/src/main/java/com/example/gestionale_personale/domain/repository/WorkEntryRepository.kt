@@ -11,4 +11,5 @@ interface WorkEntryRepository {
     suspend fun getEntryByEmployeeAndDate(employeeId: String, date: LocalDate): WorkEntry?
     suspend fun saveWorkEntry(entry: WorkEntry)
     suspend fun saveWorkEntries(entries: List<WorkEntry>)
+    suspend fun deleteWorkEntry(entry: WorkEntry)
 }

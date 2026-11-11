@@ -26,16 +26,20 @@ import java.time.LocalDate
 data class WorkEntryEntity(
     @PrimaryKey val id: String,
     @ColumnInfo(name = "employee_id") val employeeId: String,
-    val date: String, // Stored as ISO string "YYYY-MM-DD"
+    val date: String,
     @ColumnInfo(name = "worked_minutes") val workedMinutes: Int,
-    val notes: String?
+    val notes: String?,
+    @ColumnInfo(name = "start_time") val startTime: String?,
+    @ColumnInfo(name = "end_time") val endTime: String?
 ) {
     fun toDomain() = WorkEntry(
         id = id,
         employeeId = employeeId,
         date = LocalDate.parse(date),
         workedMinutes = workedMinutes,
-        notes = notes
+        notes = notes,
+        startTime = startTime,
+        endTime = endTime
     )
 
     companion object {
@@ -44,7 +48,9 @@ data class WorkEntryEntity(
             employeeId = entry.employeeId,
             date = entry.date.toString(),
             workedMinutes = entry.workedMinutes,
-            notes = entry.notes
+            notes = entry.notes,
+            startTime = entry.startTime,
+            endTime = entry.endTime
         )
     }
 }

@@ -10,12 +10,16 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -26,8 +30,10 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.core.content.FileProvider
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.gestionale_personale.domain.model.WorkEntry
 import com.example.gestionale_personale.domain.usecase.TimeUtils
 import com.example.gestionale_personale.presentation.AppViewModelProvider
+import com.example.gestionale_personale.presentation.components.CiottisTopAppBar
 import java.time.LocalDate
 import java.time.format.TextStyle
 import java.util.Locale
@@ -39,6 +45,7 @@ fun CalendarScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val context = LocalContext.current
+    var entryToDelete by remember { mutableStateOf<WorkEntry?>(null) }
 
     // Observe when a file is ready to be exported
     LaunchedEffect(uiState.exportedFile) {
@@ -58,16 +65,32 @@ fun CalendarScreen(
         }
     }
 
+    if (entryToDelete != null) {
+        AlertDialog(
+            onDismissRequest = { entryToDelete = null },
+            title = { Text("Conferma eliminazione") },
+            text = { Text("Sei sicuro di voler eliminare questo turno lavorativo?") },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        viewModel.deleteWorkEntry(entryToDelete!!)
+                        entryToDelete = null
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
+                ) {
+                    Text("Elimina")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { entryToDelete = null }) {
+                    Text("Annulla")
+                }
+            }
+        )
+    }
+
     Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text("Calendario") },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.primary,
-                    titleContentColor = MaterialTheme.colorScheme.onPrimary
-                )
-            )
-        }
+        topBar = { CiottisTopAppBar() }
     ) { paddingValues ->
         Column(
             modifier = Modifier
@@ -126,14 +149,7 @@ fun CalendarScreen(
                     modifier = Modifier.weight(1f)
                 )
 
-                Text(
-                    text = "Totale: ${TimeUtils.formatMinutesToHoursAndMinutes(uiState.totalMinutesForSelectedDate)}",
-                    style = MaterialTheme.typography.titleMedium,
-                    color = MaterialTheme.colorScheme.primary,
-                    fontWeight = FontWeight.Bold
-                )
-
-                if (uiState.totalMinutesForSelectedDate > 0) {
+                if (uiState.entriesForSelectedDate.isNotEmpty()) {
                     IconButton(
                         onClick = { viewModel.exportDailyPdf(context) },
                         enabled = !uiState.isExporting
@@ -188,11 +204,32 @@ fun CalendarScreen(
                                         )
                                     }
                                 }
+
+                                val timeStr = if (entryWithEmployee.entry.startTime != null && entryWithEmployee.entry.endTime != null) {
+                                    "${entryWithEmployee.entry.startTime} - ${entryWithEmployee.entry.endTime} (${TimeUtils.formatMinutesToHoursAndMinutes(entryWithEmployee.entry.workedMinutes)})"
+                                } else {
+                                    TimeUtils.formatMinutesToHoursAndMinutes(entryWithEmployee.entry.workedMinutes)
+                                }
+
                                 Text(
-                                    text = TimeUtils.formatMinutesToHoursAndMinutes(entryWithEmployee.entry.workedMinutes),
-                                    style = MaterialTheme.typography.titleMedium,
-                                    fontWeight = FontWeight.Bold
+                                    text = timeStr,
+                                    style = MaterialTheme.typography.titleSmall,
+                                    fontWeight = FontWeight.Bold,
+                                    color = MaterialTheme.colorScheme.primary,
+                                    modifier = Modifier.padding(horizontal = 8.dp)
                                 )
+
+                                IconButton(
+                                    onClick = { entryToDelete = entryWithEmployee.entry },
+                                    modifier = Modifier.size(24.dp)
+                                ) {
+                                    Icon(
+                                        Icons.Default.Delete,
+                                        contentDescription = "Elimina turno",
+                                        tint = MaterialTheme.colorScheme.error,
+                                        modifier = Modifier.size(20.dp)
+                                    )
+                                }
                             }
                         }
                     }

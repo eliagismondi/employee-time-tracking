@@ -39,4 +39,8 @@ class WorkEntryRepositoryImpl(
     override suspend fun saveWorkEntries(entries: List<WorkEntry>) {
         workEntryDao.insertWorkEntries(entries.map { WorkEntryEntity.fromDomain(it) })
     }
+
+    override suspend fun deleteWorkEntry(entry: WorkEntry) {
+        workEntryDao.deleteWorkEntry(WorkEntryEntity.fromDomain(entry))
+    }
 }

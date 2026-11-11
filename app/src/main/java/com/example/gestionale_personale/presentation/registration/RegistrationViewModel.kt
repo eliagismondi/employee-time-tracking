@@ -19,8 +19,11 @@ import java.util.UUID
 data class RegistrationRowState(
     val id: String = UUID.randomUUID().toString(),
     val employeeId: String? = null,
+    val isTimeRangeMode: Boolean = false,
     val hours: String = "",
     val minutes: String = "",
+    val startTime: String = "",
+    val endTime: String = "",
     val notes: String = "",
     val error: String? = null
 )
@@ -90,6 +93,16 @@ class RegistrationViewModel(
         }
     }
 
+    fun toggleTimeMode(rowId: String) {
+        _rows.update { current ->
+            current.map {
+                if (it.id == rowId) {
+                    it.copy(isTimeRangeMode = !it.isTimeRangeMode, error = null)
+                } else it
+            }
+        }
+    }
+
     fun updateRowEmployee(rowId: String, employeeId: String) {
         _rows.update { current ->
             current.map { if (it.id == rowId) it.copy(employeeId = employeeId, error = null) else it }
@@ -109,6 +122,18 @@ class RegistrationViewModel(
             _rows.update { current ->
                 current.map { if (it.id == rowId) it.copy(minutes = minutes, error = null) else it }
             }
+        }
+    }
+
+    fun updateRowStartTime(rowId: String, time: String) {
+        _rows.update { current ->
+            current.map { if (it.id == rowId) it.copy(startTime = time, error = null) else it }
+        }
+    }
+
+    fun updateRowEndTime(rowId: String, time: String) {
+        _rows.update { current ->
+            current.map { if (it.id == rowId) it.copy(endTime = time, error = null) else it }
         }
     }
 
@@ -132,9 +157,15 @@ class RegistrationViewModel(
             val date = _selectedDate.value
 
             // Validation 1: Check for completely empty forms
-            val validRows = currentRows.filter { it.employeeId != null && (it.hours.isNotBlank() || it.minutes.isNotBlank()) }
+            val validRows = currentRows.filter { row ->
+                row.employeeId != null && (
+                    (!row.isTimeRangeMode && (row.hours.isNotBlank() || row.minutes.isNotBlank())) ||
+                    (row.isTimeRangeMode && row.startTime.isNotBlank() && row.endTime.isNotBlank())
+                )
+            }
+
             if (validRows.isEmpty()) {
-                _globalError.value = "Compila almeno una riga con dipendente e ore."
+                _globalError.value = "Compila almeno una riga con dipendente e ore (o orario)."
                 _isSaving.value = false
                 return@launch
             }
@@ -152,22 +183,53 @@ class RegistrationViewModel(
             var hasDbDuplicateError = false
 
             val updatedRows = currentRows.map { row ->
-                if (row.employeeId != null && (row.hours.isNotBlank() || row.minutes.isNotBlank())) {
+                val isValidDirect = !row.isTimeRangeMode && (row.hours.isNotBlank() || row.minutes.isNotBlank())
+                val isValidTime = row.isTimeRangeMode && row.startTime.isNotBlank() && row.endTime.isNotBlank()
+
+                if (row.employeeId != null && (isValidDirect || isValidTime)) {
                     // Check DB
                     val existingEntry = workEntryRepository.getEntryByEmployeeAndDate(row.employeeId, date)
                     if (existingEntry != null) {
                         hasDbDuplicateError = true
                         row.copy(error = "Registrazione già esistente per questa data.")
                     } else {
-                        val h = row.hours.toIntOrNull() ?: 0
-                        val m = row.minutes.toIntOrNull() ?: 0
+                        var totalMinutes = 0
+                        var finalStartTime: String? = null
+                        var finalEndTime: String? = null
+
+                        if (row.isTimeRangeMode) {
+                            finalStartTime = row.startTime
+                            finalEndTime = row.endTime
+
+                            val startParts = row.startTime.split(":")
+                            val endParts = row.endTime.split(":")
+
+                            if (startParts.size == 2 && endParts.size == 2) {
+                                val startMins = (startParts[0].toIntOrNull() ?: 0) * 60 + (startParts[1].toIntOrNull() ?: 0)
+                                val endMins = (endParts[0].toIntOrNull() ?: 0) * 60 + (endParts[1].toIntOrNull() ?: 0)
+
+                                totalMinutes = if (endMins >= startMins) {
+                                    endMins - startMins
+                                } else {
+                                    // Crossed midnight
+                                    (24 * 60 - startMins) + endMins
+                                }
+                            }
+                        } else {
+                            val h = row.hours.toIntOrNull() ?: 0
+                            val m = row.minutes.toIntOrNull() ?: 0
+                            totalMinutes = (h * 60) + m
+                        }
+
                         entriesToSave.add(
                             WorkEntry(
                                 id = UUID.randomUUID().toString(),
                                 employeeId = row.employeeId,
                                 date = date,
-                                workedMinutes = (h * 60) + m,
-                                notes = row.notes.takeIf { it.isNotBlank() }
+                                workedMinutes = totalMinutes,
+                                notes = row.notes.takeIf { it.isNotBlank() },
+                                startTime = finalStartTime,
+                                endTime = finalEndTime
                             )
                         )
                         row.copy(error = null)

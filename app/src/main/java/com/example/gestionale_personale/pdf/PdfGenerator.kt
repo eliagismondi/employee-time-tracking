@@ -71,7 +71,7 @@ class PdfGenerator(private val context: Context) {
 
             // Intestazione Tabella
             canvas.drawText("Dipendente", MARGIN, currentY, headerPaint)
-            canvas.drawText("Ore Lavorate", PAGE_WIDTH - MARGIN - 100f, currentY, headerPaint)
+            canvas.drawText("Ore Lavorate", PAGE_WIDTH - MARGIN - 180f, currentY, headerPaint)
             canvas.drawLine(MARGIN, currentY + 5f, PAGE_WIDTH - MARGIN, currentY + 5f, linePaint)
 
             currentY += 25f
@@ -79,7 +79,14 @@ class PdfGenerator(private val context: Context) {
             // Righe Tabella
             summary.entries.forEach { entry ->
                 canvas.drawText(entry.employeeName, MARGIN, currentY, textPaint)
-                canvas.drawText(TimeUtils.formatMinutesToHoursAndMinutes(entry.workedMinutes), PAGE_WIDTH - MARGIN - 100f, currentY, textPaint)
+
+                val timeStr = if (entry.startTime != null && entry.endTime != null) {
+                    "${entry.startTime} - ${entry.endTime} (${TimeUtils.formatMinutesToHoursAndMinutes(entry.workedMinutes)})"
+                } else {
+                    TimeUtils.formatMinutesToHoursAndMinutes(entry.workedMinutes)
+                }
+
+                canvas.drawText(timeStr, PAGE_WIDTH - MARGIN - 180f, currentY, textPaint)
 
                 if (!entry.notes.isNullOrBlank()) {
                     currentY += 15f
@@ -89,11 +96,6 @@ class PdfGenerator(private val context: Context) {
                 currentY += 20f
                 canvas.drawLine(MARGIN, currentY - 10f, PAGE_WIDTH - MARGIN, currentY - 10f, linePaint)
             }
-
-            // Totale Giornaliero
-            currentY += 20f
-            canvas.drawText("Totale Aziendale:", MARGIN, currentY, headerPaint)
-            canvas.drawText(TimeUtils.formatMinutesToHoursAndMinutes(summary.totalMinutes), PAGE_WIDTH - MARGIN - 100f, currentY, headerPaint)
 
             document.finishPage(page)
 
@@ -141,11 +143,6 @@ class PdfGenerator(private val context: Context) {
                 currentY += 20f
                 canvas.drawLine(MARGIN, currentY - 10f, PAGE_WIDTH - MARGIN, currentY - 10f, linePaint)
             }
-
-            // Totale Aziendale Mensile
-            currentY += 20f
-            canvas.drawText("Totale Aziendale Mese:", MARGIN, currentY, headerPaint)
-            canvas.drawText(TimeUtils.formatMinutesToHoursAndMinutes(summary.totalCompanyMinutes), PAGE_WIDTH - MARGIN - 100f, currentY, headerPaint)
 
             document.finishPage(page)
 

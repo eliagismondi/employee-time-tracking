@@ -8,20 +8,20 @@ import java.time.YearMonth
 
 data class DailySummary(
     val date: LocalDate,
-    val entries: List<EmployeeDailyEntry>,
-    val totalMinutes: Int
+    val entries: List<EmployeeDailyEntry>
 )
 
 data class EmployeeDailyEntry(
     val employeeName: String,
     val workedMinutes: Int,
+    val startTime: String?,
+    val endTime: String?,
     val notes: String?
 )
 
 data class MonthlySummary(
     val month: YearMonth,
-    val employeeSummaries: List<EmployeeMonthlyEntry>,
-    val totalCompanyMinutes: Int
+    val employeeSummaries: List<EmployeeMonthlyEntry>
 )
 
 data class EmployeeMonthlyEntry(

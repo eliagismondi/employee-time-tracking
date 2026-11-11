@@ -5,7 +5,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.Person
-import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
@@ -23,14 +22,12 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.example.gestionale_personale.presentation.calendar.CalendarScreen
 import com.example.gestionale_personale.presentation.employees.EmployeesScreen
-import com.example.gestionale_personale.presentation.export.ExportScreen
 import com.example.gestionale_personale.presentation.registration.RegistrationScreen
 
 sealed class BottomNavItem(val route: String, val title: String, val icon: ImageVector) {
     object Calendar : BottomNavItem(Screen.Calendar.route, "Calendario", Icons.Default.DateRange)
     object Employees : BottomNavItem(Screen.Employees.route, "Operai", Icons.Default.Person)
     object Registration : BottomNavItem(Screen.Registration.route, "Registra", Icons.Default.Add)
-    object Export : BottomNavItem(Screen.Export.route, "Report", Icons.Default.Share)
 }
 
 @Composable
@@ -40,8 +37,7 @@ fun AppNavigation() {
     val items = listOf(
         BottomNavItem.Calendar,
         BottomNavItem.Employees,
-        BottomNavItem.Registration,
-        BottomNavItem.Export
+        BottomNavItem.Registration
     )
 
     Scaffold(
@@ -77,7 +73,6 @@ fun AppNavigation() {
             composable(Screen.Calendar.route) { CalendarScreen() }
             composable(Screen.Employees.route) { EmployeesScreen() }
             composable(Screen.Registration.route) { RegistrationScreen() }
-            composable(Screen.Export.route) { ExportScreen() }
         }
     }
 }

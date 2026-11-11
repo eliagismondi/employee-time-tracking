@@ -1,6 +1,7 @@
 package com.example.gestionale_personale.data.local.dao
 
 import androidx.room.Dao
+import androidx.room.Delete
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
@@ -23,11 +24,14 @@ interface WorkEntryDao {
     suspend fun getEntryByEmployeeAndDate(employeeId: String, date: String): WorkEntryEntity?
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insertWorkEntry(entry: WorkEntryEntity)
+    suspend fun insertWorkEntry(entry: WorkEntryEntity): Long
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insertWorkEntries(entries: List<WorkEntryEntity>)
+    suspend fun insertWorkEntries(entries: List<WorkEntryEntity>): List<Long>
 
     @Update
-    suspend fun updateWorkEntry(entry: WorkEntryEntity)
+    suspend fun updateWorkEntry(entry: WorkEntryEntity): Int
+
+    @Delete
+    suspend fun deleteWorkEntry(entry: WorkEntryEntity)
 }

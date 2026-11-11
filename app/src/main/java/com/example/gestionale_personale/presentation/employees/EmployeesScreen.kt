@@ -14,6 +14,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.gestionale_personale.domain.model.Employee
 import com.example.gestionale_personale.presentation.AppViewModelProvider
+import com.example.gestionale_personale.presentation.components.CiottisTopAppBar
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -25,15 +26,7 @@ fun EmployeesScreen(
     var employeeToEdit by remember { mutableStateOf<Employee?>(null) }
 
     Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text("Operai") },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.primary,
-                    titleContentColor = MaterialTheme.colorScheme.onPrimary
-                )
-            )
-        },
+        topBar = { CiottisTopAppBar() },
         floatingActionButton = {
             FloatingActionButton(onClick = { showAddDialog = true }) {
                 Icon(Icons.Default.Add, contentDescription = "Aggiungi Operaio")

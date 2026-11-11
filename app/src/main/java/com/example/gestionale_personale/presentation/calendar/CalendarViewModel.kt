@@ -25,7 +25,6 @@ data class CalendarUiState(
     val selectedDate: LocalDate = LocalDate.now(),
     val entriesForSelectedDate: List<EntryWithEmployee> = emptyList(),
     val daysWithEntries: Set<LocalDate> = emptySet(),
-    val totalMinutesForSelectedDate: Int = 0,
     val isExporting: Boolean = false,
     val exportedFile: File? = null
 )
@@ -83,14 +82,11 @@ class CalendarViewModel(
             )
         }
 
-        val totalMinutes = dayEntries.sumOf { it.workedMinutes }
-
         CalendarUiState(
             currentMonth = currentMonth,
             selectedDate = selectedDate,
             entriesForSelectedDate = entriesWithEmployee,
             daysWithEntries = daysWithEntries,
-            totalMinutesForSelectedDate = totalMinutes,
             isExporting = isExporting,
             exportedFile = exportedFile
         )
@@ -128,5 +124,11 @@ class CalendarViewModel(
 
     fun onPdfShared() {
         _exportedFile.value = null
+    }
+
+    fun deleteWorkEntry(entry: WorkEntry) {
+        viewModelScope.launch {
+            workEntryRepository.deleteWorkEntry(entry)
+        }
     }
 }

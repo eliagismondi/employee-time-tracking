@@ -1,7 +1,9 @@
 package com.example.gestionale_personale.presentation.registration
 
 import android.app.DatePickerDialog
+import android.app.TimePickerDialog
 import android.widget.DatePicker
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -21,6 +23,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.gestionale_personale.domain.model.Employee
 import com.example.gestionale_personale.presentation.AppViewModelProvider
+import com.example.gestionale_personale.presentation.components.CiottisTopAppBar
 import java.time.LocalDate
 import java.time.format.TextStyle
 import java.util.*
@@ -48,7 +51,7 @@ fun RegistrationScreen(
         AlertDialog(
             onDismissRequest = { viewModel.resetSuccessState() },
             title = { Text("Successo") },
-            text = { Text("Le ore sono state salvate correttamente nel database.") },
+            text = { Text("Turno registrato con successo") },
             confirmButton = {
                 Button(onClick = { viewModel.resetSuccessState() }) {
                     Text("OK")
@@ -59,18 +62,13 @@ fun RegistrationScreen(
 
     Scaffold(
         topBar = {
-            TopAppBar(
-                title = { Text("Registra ore") },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.primary,
-                    titleContentColor = MaterialTheme.colorScheme.onPrimary
-                ),
+            CiottisTopAppBar(
                 actions = {
                     IconButton(
                         onClick = { viewModel.saveEntries() },
                         enabled = !uiState.isSaving
                     ) {
-                        Icon(Icons.Default.Check, contentDescription = "Salva")
+                        Icon(Icons.Default.Check, contentDescription = "Salva", tint = MaterialTheme.colorScheme.primary)
                     }
                 }
             )
@@ -129,8 +127,11 @@ fun RegistrationScreen(
                             rowState = row,
                             activeEmployees = uiState.activeEmployees,
                             onEmployeeSelected = { viewModel.updateRowEmployee(row.id, it) },
+                            onToggleMode = { viewModel.toggleTimeMode(row.id) },
                             onHoursChanged = { viewModel.updateRowHours(row.id, it) },
                             onMinutesChanged = { viewModel.updateRowMinutes(row.id, it) },
+                            onStartTimeChanged = { viewModel.updateRowStartTime(row.id, it) },
+                            onEndTimeChanged = { viewModel.updateRowEndTime(row.id, it) },
                             onNotesChanged = { viewModel.updateRowNotes(row.id, it) },
                             onRemove = { viewModel.removeRow(row.id) }
                         )
@@ -147,12 +148,24 @@ fun RegistrationRowItem(
     rowState: RegistrationRowState,
     activeEmployees: List<Employee>,
     onEmployeeSelected: (String) -> Unit,
+    onToggleMode: () -> Unit,
     onHoursChanged: (String) -> Unit,
     onMinutesChanged: (String) -> Unit,
+    onStartTimeChanged: (String) -> Unit,
+    onEndTimeChanged: (String) -> Unit,
     onNotesChanged: (String) -> Unit,
     onRemove: () -> Unit
 ) {
     var expanded by remember { mutableStateOf(false) }
+    val context = LocalContext.current
+
+    val startTimeDialog = TimePickerDialog(context, { _, hour, min ->
+        onStartTimeChanged(String.format(Locale.ITALIAN, "%02d:%02d", hour, min))
+    }, 8, 0, true)
+
+    val endTimeDialog = TimePickerDialog(context, { _, hour, min ->
+        onEndTimeChanged(String.format(Locale.ITALIAN, "%02d:%02d", hour, min))
+    }, 17, 0, true)
 
     Card(
         modifier = Modifier.fillMaxWidth(),
@@ -211,24 +224,62 @@ fun RegistrationRowItem(
                 }
             }
 
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text("Inserisci orario preciso", modifier = Modifier.weight(1f))
+                Switch(checked = rowState.isTimeRangeMode, onCheckedChange = { onToggleMode() })
+            }
+
             // Time inputs
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                OutlinedTextField(
-                    value = rowState.hours,
-                    onValueChange = onHoursChanged,
-                    label = { Text("Ore") },
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                    modifier = Modifier.weight(1f),
-                    singleLine = true
-                )
-                OutlinedTextField(
-                    value = rowState.minutes,
-                    onValueChange = onMinutesChanged,
-                    label = { Text("Minuti") },
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                    modifier = Modifier.weight(1f),
-                    singleLine = true
-                )
+            if (rowState.isTimeRangeMode) {
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    OutlinedTextField(
+                        value = rowState.startTime,
+                        onValueChange = {},
+                        label = { Text("Inizio (es. 08:00)") },
+                        modifier = Modifier
+                            .weight(1f)
+                            .clickable { startTimeDialog.show() },
+                        enabled = false,
+                        colors = OutlinedTextFieldDefaults.colors(
+                            disabledTextColor = MaterialTheme.colorScheme.onSurface,
+                            disabledBorderColor = MaterialTheme.colorScheme.outline,
+                            disabledLabelColor = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    )
+                    OutlinedTextField(
+                        value = rowState.endTime,
+                        onValueChange = {},
+                        label = { Text("Fine (es. 17:00)") },
+                        modifier = Modifier
+                            .weight(1f)
+                            .clickable { endTimeDialog.show() },
+                        enabled = false,
+                        colors = OutlinedTextFieldDefaults.colors(
+                            disabledTextColor = MaterialTheme.colorScheme.onSurface,
+                            disabledBorderColor = MaterialTheme.colorScheme.outline,
+                            disabledLabelColor = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    )
+                }
+            } else {
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    OutlinedTextField(
+                        value = rowState.hours,
+                        onValueChange = onHoursChanged,
+                        label = { Text("Ore") },
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                        modifier = Modifier.weight(1f),
+                        singleLine = true
+                    )
+                    OutlinedTextField(
+                        value = rowState.minutes,
+                        onValueChange = onMinutesChanged,
+                        label = { Text("Minuti") },
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                        modifier = Modifier.weight(1f),
+                        singleLine = true
+                    )
+                }
             }
 
             // Notes
