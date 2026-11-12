@@ -4,20 +4,23 @@ import android.content.Context
 import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
+import com.example.gestionale_personale.data.local.dao.DailyGeneralNotesDao
 import com.example.gestionale_personale.data.local.dao.EmployeeDao
 import com.example.gestionale_personale.data.local.dao.WorkEntryDao
+import com.example.gestionale_personale.data.local.entity.DailyGeneralNotesEntity
 import com.example.gestionale_personale.data.local.entity.EmployeeEntity
 import com.example.gestionale_personale.data.local.entity.WorkEntryEntity
 
 @Database(
-    entities = [EmployeeEntity::class, WorkEntryEntity::class],
-    version = 2,
+    entities = [EmployeeEntity::class, WorkEntryEntity::class, DailyGeneralNotesEntity::class],
+    version = 3,
     exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {
 
     abstract fun employeeDao(): EmployeeDao
     abstract fun workEntryDao(): WorkEntryDao
+    abstract fun dailyGeneralNotesDao(): DailyGeneralNotesDao
 
     companion object {
         @Volatile

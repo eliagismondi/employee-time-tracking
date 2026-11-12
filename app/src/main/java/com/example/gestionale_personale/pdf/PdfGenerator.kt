@@ -51,7 +51,7 @@ class PdfGenerator(private val context: Context) {
         strokeWidth = 1f
     }
 
-    suspend fun generateDailyReport(summary: DailySummary): File? = withContext(Dispatchers.IO) {
+    suspend fun generateDailyReport(summary: DailySummary, generalNotes: String = ""): File? = withContext(Dispatchers.IO) {
         try {
             val document = PdfDocument()
             val pageInfo = PdfDocument.PageInfo.Builder(PAGE_WIDTH, PAGE_HEIGHT, 1).create()
@@ -68,6 +68,20 @@ class PdfGenerator(private val context: Context) {
             canvas.drawText("Data: $dateStr", MARGIN, CONTENT_START_Y, titlePaint)
 
             var currentY = CONTENT_START_Y + 40f
+
+            if (generalNotes.isNotBlank()) {
+                canvas.drawText("Note Generali del Giorno:", MARGIN, currentY, headerPaint)
+                currentY += 15f
+
+                // Semplice word wrap (molto basilare, dividiamo per righe manuali o blocchi)
+                val noteLines = generalNotes.split("\n")
+                noteLines.forEach { line ->
+                    canvas.drawText(line, MARGIN, currentY, textPaint)
+                    currentY += 15f
+                }
+
+                currentY += 10f
+            }
 
             // Intestazione Tabella
             canvas.drawText("Dipendente", MARGIN, currentY, headerPaint)
@@ -88,9 +102,14 @@ class PdfGenerator(private val context: Context) {
 
                 canvas.drawText(timeStr, PAGE_WIDTH - MARGIN - 180f, currentY, textPaint)
 
+                if (!entry.worksiteName.isNullOrBlank()) {
+                    currentY += 15f
+                    canvas.drawText("Cantiere: ${entry.worksiteName}", MARGIN + 20f, currentY, textPaint)
+                }
+
                 if (!entry.notes.isNullOrBlank()) {
                     currentY += 15f
-                    canvas.drawText("Note: ${entry.notes}", MARGIN + 20f, currentY, textPaint)
+                    canvas.drawText("Note Turno: ${entry.notes}", MARGIN + 20f, currentY, textPaint)
                 }
 
                 currentY += 20f

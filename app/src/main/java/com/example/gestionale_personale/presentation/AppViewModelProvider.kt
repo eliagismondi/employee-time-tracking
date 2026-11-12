@@ -17,13 +17,15 @@ object AppViewModelProvider {
         initializer {
             CalendarViewModel(
                 ciottisWorkersApp().container.workEntryRepository,
-                ciottisWorkersApp().container.employeeRepository
+                ciottisWorkersApp().container.employeeRepository,
+                ciottisWorkersApp().container.dailyGeneralNotesRepository
             )
         }
         initializer {
             RegistrationViewModel(
                 ciottisWorkersApp().container.workEntryRepository,
-                ciottisWorkersApp().container.employeeRepository
+                ciottisWorkersApp().container.employeeRepository,
+                ciottisWorkersApp().container.dailyGeneralNotesRepository
             )
         }
     }

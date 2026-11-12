@@ -3,8 +3,10 @@ package com.example.gestionale_personale.presentation.calendar
 import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.gestionale_personale.domain.model.DailyGeneralNotes
 import com.example.gestionale_personale.domain.model.Employee
 import com.example.gestionale_personale.domain.model.WorkEntry
+import com.example.gestionale_personale.domain.repository.DailyGeneralNotesRepository
 import com.example.gestionale_personale.domain.repository.EmployeeRepository
 import com.example.gestionale_personale.domain.repository.WorkEntryRepository
 import com.example.gestionale_personale.domain.usecase.PdfExportUseCase
@@ -24,6 +26,7 @@ data class CalendarUiState(
     val currentMonth: YearMonth = YearMonth.now(),
     val selectedDate: LocalDate = LocalDate.now(),
     val entriesForSelectedDate: List<EntryWithEmployee> = emptyList(),
+    val generalNotesForSelectedDate: String = "",
     val daysWithEntries: Set<LocalDate> = emptySet(),
     val isExporting: Boolean = false,
     val exportedFile: File? = null
@@ -36,7 +39,8 @@ data class EntryWithEmployee(
 
 class CalendarViewModel(
     private val workEntryRepository: WorkEntryRepository,
-    private val employeeRepository: EmployeeRepository
+    private val employeeRepository: EmployeeRepository,
+    private val dailyGeneralNotesRepository: DailyGeneralNotesRepository
 ) : ViewModel() {
 
     private val _currentMonth = MutableStateFlow(YearMonth.now())
@@ -56,12 +60,18 @@ class CalendarViewModel(
         workEntryRepository.getEntriesForDate(date)
     }
 
+    // Le note generali del giorno selezionato
+    private val selectedDateGeneralNotes = _selectedDate.flatMapLatest { date ->
+        dailyGeneralNotesRepository.getNotesForDate(date)
+    }
+
     val uiState: StateFlow<CalendarUiState> = combine(
         _currentMonth,
         _selectedDate,
         monthEntries,
         selectedDateEntries,
         employeeRepository.getAllEmployees(),
+        selectedDateGeneralNotes,
         _isExporting,
         _exportedFile
     ) { args: Array<Any?> ->
@@ -70,8 +80,9 @@ class CalendarViewModel(
         val monthEntries = args[2] as List<WorkEntry>
         val dayEntries = args[3] as List<WorkEntry>
         val allEmployees = args[4] as List<Employee>
-        val isExporting = args[5] as Boolean
-        val exportedFile = args[6] as File?
+        val generalNotes = args[5] as DailyGeneralNotes?
+        val isExporting = args[6] as Boolean
+        val exportedFile = args[7] as File?
 
         val daysWithEntries = monthEntries.map { it.date }.toSet()
 
@@ -86,6 +97,7 @@ class CalendarViewModel(
             currentMonth = currentMonth,
             selectedDate = selectedDate,
             entriesForSelectedDate = entriesWithEmployee,
+            generalNotesForSelectedDate = generalNotes?.notes ?: "",
             daysWithEntries = daysWithEntries,
             isExporting = isExporting,
             exportedFile = exportedFile
@@ -115,7 +127,7 @@ class CalendarViewModel(
     fun exportDailyPdf(context: Context) {
         viewModelScope.launch {
             _isExporting.value = true
-            val useCase = PdfExportUseCase(workEntryRepository, employeeRepository, context)
+            val useCase = PdfExportUseCase(workEntryRepository, employeeRepository, dailyGeneralNotesRepository, context)
             val file = useCase.exportDailyReport(_selectedDate.value)
             _exportedFile.value = file
             _isExporting.value = false

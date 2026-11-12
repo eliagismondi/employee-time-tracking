@@ -2,14 +2,17 @@ package com.example.gestionale_personale.presentation.registration
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.gestionale_personale.domain.model.DailyGeneralNotes
 import com.example.gestionale_personale.domain.model.Employee
 import com.example.gestionale_personale.domain.model.WorkEntry
+import com.example.gestionale_personale.domain.repository.DailyGeneralNotesRepository
 import com.example.gestionale_personale.domain.repository.EmployeeRepository
 import com.example.gestionale_personale.domain.repository.WorkEntryRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -24,6 +27,7 @@ data class RegistrationRowState(
     val minutes: String = "",
     val startTime: String = "",
     val endTime: String = "",
+    val worksiteName: String = "",
     val notes: String = "",
     val error: String? = null
 )
@@ -32,6 +36,7 @@ data class RegistrationUiState(
     val selectedDate: LocalDate = LocalDate.now(),
     val rows: List<RegistrationRowState> = listOf(RegistrationRowState()),
     val activeEmployees: List<Employee> = emptyList(),
+    val generalNotes: String = "",
     val isSaving: Boolean = false,
     val saveSuccess: Boolean = false,
     val globalError: String? = null
@@ -39,19 +44,33 @@ data class RegistrationUiState(
 
 class RegistrationViewModel(
     private val workEntryRepository: WorkEntryRepository,
-    employeeRepository: EmployeeRepository
+    employeeRepository: EmployeeRepository,
+    private val dailyGeneralNotesRepository: DailyGeneralNotesRepository
 ) : ViewModel() {
 
     private val _selectedDate = MutableStateFlow(LocalDate.now())
     private val _rows = MutableStateFlow(listOf(RegistrationRowState()))
+    private val _generalNotes = MutableStateFlow("")
     private val _isSaving = MutableStateFlow(false)
     private val _saveSuccess = MutableStateFlow(false)
     private val _globalError = MutableStateFlow<String?>(null)
+
+    init {
+        // Load existing general notes for the selected date
+        viewModelScope.launch {
+            _selectedDate.flatMapLatest { date ->
+                dailyGeneralNotesRepository.getNotesForDate(date)
+            }.collect { notes ->
+                _generalNotes.value = notes?.notes ?: ""
+            }
+        }
+    }
 
     val uiState: StateFlow<RegistrationUiState> = combine(
         _selectedDate,
         _rows,
         employeeRepository.getActiveEmployees(),
+        _generalNotes,
         _isSaving,
         _saveSuccess,
         _globalError
@@ -60,9 +79,10 @@ class RegistrationViewModel(
             selectedDate = args[0] as LocalDate,
             rows = args[1] as List<RegistrationRowState>,
             activeEmployees = args[2] as List<Employee>,
-            isSaving = args[3] as Boolean,
-            saveSuccess = args[4] as Boolean,
-            globalError = args[5] as String?
+            generalNotes = args[3] as String,
+            isSaving = args[4] as Boolean,
+            saveSuccess = args[5] as Boolean,
+            globalError = args[6] as String?
         )
     }.stateIn(
         scope = viewModelScope,
@@ -137,10 +157,20 @@ class RegistrationViewModel(
         }
     }
 
+    fun updateRowWorksite(rowId: String, worksite: String) {
+        _rows.update { current ->
+            current.map { if (it.id == rowId) it.copy(worksiteName = worksite, error = null) else it }
+        }
+    }
+
     fun updateRowNotes(rowId: String, notes: String) {
         _rows.update { current ->
             current.map { if (it.id == rowId) it.copy(notes = notes) else it }
         }
+    }
+
+    fun updateGeneralNotes(notes: String) {
+        _generalNotes.value = notes
     }
 
     fun resetSuccessState() {
@@ -156,6 +186,17 @@ class RegistrationViewModel(
             val currentRows = _rows.value
             val date = _selectedDate.value
 
+            // Save general notes if present
+            if (_generalNotes.value.isNotBlank()) {
+                dailyGeneralNotesRepository.saveNotes(
+                    DailyGeneralNotes(
+                        id = UUID.randomUUID().toString(),
+                        date = date,
+                        notes = _generalNotes.value
+                    )
+                )
+            }
+
             // Validation 1: Check for completely empty forms
             val validRows = currentRows.filter { row ->
                 row.employeeId != null && (
@@ -165,7 +206,12 @@ class RegistrationViewModel(
             }
 
             if (validRows.isEmpty()) {
-                _globalError.value = "Compila almeno una riga con dipendente e ore (o orario)."
+                // If there are no rows but there are general notes, it's still a success
+                if (_generalNotes.value.isNotBlank()) {
+                    _saveSuccess.value = true
+                } else {
+                    _globalError.value = "Compila almeno una riga con dipendente e ore, oppure aggiungi delle note generali."
+                }
                 _isSaving.value = false
                 return@launch
             }
@@ -214,7 +260,8 @@ class RegistrationViewModel(
                             workedMinutes = totalMinutes,
                             notes = row.notes.takeIf { it.isNotBlank() },
                             startTime = finalStartTime,
-                            endTime = finalEndTime
+                            endTime = finalEndTime,
+                            worksiteName = row.worksiteName.takeIf { it.isNotBlank() }
                         )
                     )
                     row.copy(error = null)

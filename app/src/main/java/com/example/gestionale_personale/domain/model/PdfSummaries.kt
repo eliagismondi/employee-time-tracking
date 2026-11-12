@@ -16,6 +16,7 @@ data class EmployeeDailyEntry(
     val workedMinutes: Int,
     val startTime: String?,
     val endTime: String?,
+    val worksiteName: String?,
     val notes: String?
 )
 

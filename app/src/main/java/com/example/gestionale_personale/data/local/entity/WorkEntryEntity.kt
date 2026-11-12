@@ -30,7 +30,8 @@ data class WorkEntryEntity(
     @ColumnInfo(name = "worked_minutes") val workedMinutes: Int,
     val notes: String?,
     @ColumnInfo(name = "start_time") val startTime: String?,
-    @ColumnInfo(name = "end_time") val endTime: String?
+    @ColumnInfo(name = "end_time") val endTime: String?,
+    @ColumnInfo(name = "worksite_name") val worksiteName: String?
 ) {
     fun toDomain() = WorkEntry(
         id = id,
@@ -39,7 +40,8 @@ data class WorkEntryEntity(
         workedMinutes = workedMinutes,
         notes = notes,
         startTime = startTime,
-        endTime = endTime
+        endTime = endTime,
+        worksiteName = worksiteName
     )
 
     companion object {
@@ -50,7 +52,8 @@ data class WorkEntryEntity(
             workedMinutes = entry.workedMinutes,
             notes = entry.notes,
             startTime = entry.startTime,
-            endTime = entry.endTime
+            endTime = entry.endTime,
+            worksiteName = entry.worksiteName
         )
     }
 }

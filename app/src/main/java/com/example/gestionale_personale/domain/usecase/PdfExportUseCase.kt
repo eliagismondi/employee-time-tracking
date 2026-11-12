@@ -5,6 +5,7 @@ import com.example.gestionale_personale.domain.model.DailySummary
 import com.example.gestionale_personale.domain.model.EmployeeDailyEntry
 import com.example.gestionale_personale.domain.model.EmployeeMonthlyEntry
 import com.example.gestionale_personale.domain.model.MonthlySummary
+import com.example.gestionale_personale.domain.repository.DailyGeneralNotesRepository
 import com.example.gestionale_personale.domain.repository.EmployeeRepository
 import com.example.gestionale_personale.domain.repository.WorkEntryRepository
 import com.example.gestionale_personale.pdf.PdfGenerator
@@ -16,13 +17,16 @@ import java.time.YearMonth
 class PdfExportUseCase(
     private val workEntryRepository: WorkEntryRepository,
     private val employeeRepository: EmployeeRepository,
+    private val dailyGeneralNotesRepository: DailyGeneralNotesRepository,
     private val context: Context
 ) {
     private val pdfGenerator = PdfGenerator(context)
 
     suspend fun exportDailyReport(date: LocalDate): File? {
         val entries = workEntryRepository.getEntriesForDate(date).first()
-        if (entries.isEmpty()) return null
+        val generalNotes = dailyGeneralNotesRepository.getNotesForDate(date).first()?.notes ?: ""
+
+        if (entries.isEmpty() && generalNotes.isBlank()) return null
 
         val employees = employeeRepository.getAllEmployees().first()
 
@@ -35,6 +39,7 @@ class PdfExportUseCase(
                 workedMinutes = entry.workedMinutes,
                 startTime = entry.startTime,
                 endTime = entry.endTime,
+                worksiteName = entry.worksiteName,
                 notes = entry.notes
             )
         }
@@ -44,7 +49,7 @@ class PdfExportUseCase(
             entries = dailyEntries
         )
 
-        return pdfGenerator.generateDailyReport(summary)
+        return pdfGenerator.generateDailyReport(summary, generalNotes)
     }
 
     suspend fun exportMonthlyReport(month: YearMonth): File? {

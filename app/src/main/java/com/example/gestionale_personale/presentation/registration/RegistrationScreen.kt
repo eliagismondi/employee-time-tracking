@@ -104,6 +104,18 @@ fun RegistrationScreen(
                 }
             }
 
+            // General Notes for the day
+            OutlinedTextField(
+                value = uiState.generalNotes,
+                onValueChange = { viewModel.updateGeneralNotes(it) },
+                label = { Text("Note Generali del Giorno (Stato cantieri, ecc.)") },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp)
+                    .heightIn(min = 100.dp),
+                maxLines = 5
+            )
+
             if (uiState.globalError != null) {
                 Text(
                     text = uiState.globalError!!,
@@ -132,6 +144,7 @@ fun RegistrationScreen(
                             onMinutesChanged = { viewModel.updateRowMinutes(row.id, it) },
                             onStartTimeChanged = { viewModel.updateRowStartTime(row.id, it) },
                             onEndTimeChanged = { viewModel.updateRowEndTime(row.id, it) },
+                            onWorksiteChanged = { viewModel.updateRowWorksite(row.id, it) },
                             onNotesChanged = { viewModel.updateRowNotes(row.id, it) },
                             onRemove = { viewModel.removeRow(row.id) }
                         )
@@ -153,6 +166,7 @@ fun RegistrationRowItem(
     onMinutesChanged: (String) -> Unit,
     onStartTimeChanged: (String) -> Unit,
     onEndTimeChanged: (String) -> Unit,
+    onWorksiteChanged: (String) -> Unit,
     onNotesChanged: (String) -> Unit,
     onRemove: () -> Unit
 ) {
@@ -224,6 +238,15 @@ fun RegistrationRowItem(
                 }
             }
 
+            // Worksite Name
+            OutlinedTextField(
+                value = rowState.worksiteName,
+                onValueChange = onWorksiteChanged,
+                label = { Text("Nome Cantiere (es. Civitanova Marche)") },
+                modifier = Modifier.fillMaxWidth(),
+                singleLine = true
+            )
+
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text("Inserisci orario preciso", modifier = Modifier.weight(1f))
                 Switch(checked = rowState.isTimeRangeMode, onCheckedChange = { onToggleMode() })
@@ -234,7 +257,7 @@ fun RegistrationRowItem(
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     OutlinedTextField(
                         value = rowState.startTime,
-                        onValueChange = {},
+                        onValueChange = { },
                         label = { Text("Inizio (es. 08:00)") },
                         modifier = Modifier
                             .weight(1f)
@@ -248,7 +271,7 @@ fun RegistrationRowItem(
                     )
                     OutlinedTextField(
                         value = rowState.endTime,
-                        onValueChange = {},
+                        onValueChange = { },
                         label = { Text("Fine (es. 17:00)") },
                         modifier = Modifier
                             .weight(1f)
@@ -286,7 +309,7 @@ fun RegistrationRowItem(
             OutlinedTextField(
                 value = rowState.notes,
                 onValueChange = onNotesChanged,
-                label = { Text("Note (Opzionale)") },
+                label = { Text("Note Turno (Opzionale)") },
                 modifier = Modifier.fillMaxWidth(),
                 singleLine = true
             )

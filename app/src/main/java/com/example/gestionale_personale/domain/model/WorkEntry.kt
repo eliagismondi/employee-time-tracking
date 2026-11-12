@@ -9,5 +9,6 @@ data class WorkEntry(
     val workedMinutes: Int,
     val notes: String? = null,
     val startTime: String? = null,
-    val endTime: String? = null
+    val endTime: String? = null,
+    val worksiteName: String? = null
 )

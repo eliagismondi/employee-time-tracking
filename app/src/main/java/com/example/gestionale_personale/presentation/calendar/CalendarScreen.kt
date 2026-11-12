@@ -149,7 +149,7 @@ fun CalendarScreen(
                     modifier = Modifier.weight(1f)
                 )
 
-                if (uiState.entriesForSelectedDate.isNotEmpty()) {
+                if (uiState.entriesForSelectedDate.isNotEmpty() || uiState.generalNotesForSelectedDate.isNotBlank()) {
                     IconButton(
                         onClick = { viewModel.exportDailyPdf(context) },
                         enabled = !uiState.isExporting
@@ -163,17 +163,42 @@ fun CalendarScreen(
                 }
             }
 
+            // General Notes
+            if (uiState.generalNotesForSelectedDate.isNotBlank()) {
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 8.dp),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
+                ) {
+                    Column(modifier = Modifier.padding(12.dp)) {
+                        Text(
+                            text = "Note Generali:",
+                            style = MaterialTheme.typography.titleSmall,
+                            fontWeight = FontWeight.Bold
+                        )
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(
+                            text = uiState.generalNotesForSelectedDate,
+                            style = MaterialTheme.typography.bodyMedium
+                        )
+                    }
+                }
+            }
+
             // Day Entries List
             if (uiState.entriesForSelectedDate.isEmpty()) {
-                Box(
-                    modifier = Modifier.fillMaxSize(),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text(
-                        text = "Nessuna registrazione per questa data.",
-                        style = MaterialTheme.typography.bodyLarge,
-                        color = Color.Gray
-                    )
+                if (uiState.generalNotesForSelectedDate.isBlank()) {
+                    Box(
+                        modifier = Modifier.fillMaxSize(),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = "Nessuna registrazione per questa data.",
+                            style = MaterialTheme.typography.bodyLarge,
+                            color = Color.Gray
+                        )
+                    }
                 }
             } else {
                 LazyColumn(
@@ -196,6 +221,16 @@ fun CalendarScreen(
                                 Column(modifier = Modifier.weight(1f)) {
                                     val empName = entryWithEmployee.employee?.let { "${it.lastName} ${it.firstName}" } ?: "Dipendente Rimosso"
                                     Text(text = empName, style = MaterialTheme.typography.titleMedium)
+
+                                    if (!entryWithEmployee.entry.worksiteName.isNullOrBlank()) {
+                                        Text(
+                                            text = "Cantiere: ${entryWithEmployee.entry.worksiteName}",
+                                            style = MaterialTheme.typography.bodySmall,
+                                            fontWeight = FontWeight.SemiBold,
+                                            color = MaterialTheme.colorScheme.secondary
+                                        )
+                                    }
+
                                     if (!entryWithEmployee.entry.notes.isNullOrBlank()) {
                                         Text(
                                             text = "Note: ${entryWithEmployee.entry.notes}",
