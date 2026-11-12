@@ -8,6 +8,7 @@ import com.example.gestionale_personale.CiottisWorkersApp
 import com.example.gestionale_personale.presentation.calendar.CalendarViewModel
 import com.example.gestionale_personale.presentation.employees.EmployeesViewModel
 import com.example.gestionale_personale.presentation.registration.RegistrationViewModel
+import com.example.gestionale_personale.presentation.voice.VoiceRegistrationViewModel
 
 object AppViewModelProvider {
     val Factory = viewModelFactory {
@@ -23,6 +24,13 @@ object AppViewModelProvider {
         }
         initializer {
             RegistrationViewModel(
+                ciottisWorkersApp().container.workEntryRepository,
+                ciottisWorkersApp().container.employeeRepository,
+                ciottisWorkersApp().container.dailyGeneralNotesRepository
+            )
+        }
+        initializer {
+            VoiceRegistrationViewModel(
                 ciottisWorkersApp().container.workEntryRepository,
                 ciottisWorkersApp().container.employeeRepository,
                 ciottisWorkersApp().container.dailyGeneralNotesRepository

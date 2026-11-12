@@ -20,21 +20,27 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.gestionale_personale.presentation.AppViewModelProvider
 import com.example.gestionale_personale.presentation.components.CiottisTopAppBar
 import kotlinx.coroutines.delay
 import java.io.File
 import java.io.IOException
+import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun VoiceRegistrationScreen() {
+fun VoiceRegistrationScreen(
+    viewModel: VoiceRegistrationViewModel = viewModel(factory = AppViewModelProvider.Factory)
+) {
     val context = LocalContext.current
+    val uiState by viewModel.uiState.collectAsState()
+
     var isRecording by remember { mutableStateOf(false) }
     var hasPermission by remember {
         mutableStateOf(
@@ -45,7 +51,6 @@ fun VoiceRegistrationScreen() {
         )
     }
 
-    // Permission Requester
     val permissionLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestPermission(),
         onResult = { granted ->
@@ -53,12 +58,10 @@ fun VoiceRegistrationScreen() {
         }
     )
 
-    // MediaRecorder State
     var mediaRecorder by remember { mutableStateOf<MediaRecorder?>(null) }
     var audioFile by remember { mutableStateOf<File?>(null) }
-
-    // Recording duration timer
     var recordingDuration by remember { mutableStateOf(0) }
+
     LaunchedEffect(isRecording) {
         if (isRecording) {
             recordingDuration = 0
@@ -69,7 +72,6 @@ fun VoiceRegistrationScreen() {
         }
     }
 
-    // Clean up recorder on dispose
     DisposableEffect(Unit) {
         onDispose {
             mediaRecorder?.release()
@@ -77,7 +79,6 @@ fun VoiceRegistrationScreen() {
         }
     }
 
-    // Funzione per avviare la registrazione
     fun startRecording() {
         if (!hasPermission) {
             permissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
@@ -103,12 +104,11 @@ fun VoiceRegistrationScreen() {
             }
             isRecording = true
         } catch (e: IOException) {
-            Log.e("VoiceScreen", "MediaRecorder prepare() failed")
+            Log.e("VoiceScreen", "MediaRecorder prepare() failed", e)
             isRecording = false
         }
     }
 
-    // Funzione per fermare la registrazione
     fun stopRecording() {
         if (isRecording) {
             try {
@@ -122,11 +122,39 @@ fun VoiceRegistrationScreen() {
                 mediaRecorder = null
                 isRecording = false
 
-                // TODO: Qui l'audioFile è pronto e salvato in cache!
-                // Manderemo audioFile all'API di Intelligenza Artificiale
-                Log.d("VoiceScreen", "File saved at: ${audioFile?.absolutePath}")
+                audioFile?.let { file ->
+                    viewModel.processAudio(file)
+                }
             }
         }
+    }
+
+    when (uiState) {
+        is VoiceUiState.Success -> {
+            AlertDialog(
+                onDismissRequest = { viewModel.resetState() },
+                title = { Text("Registrazione IA completata") },
+                text = { Text("Sono stati trascritti e registrati con successo ${(uiState as VoiceUiState.Success).savedCount} turni per la data di oggi.") },
+                confirmButton = {
+                    Button(onClick = { viewModel.resetState() }) {
+                        Text("OK")
+                    }
+                }
+            )
+        }
+        is VoiceUiState.Error -> {
+            AlertDialog(
+                onDismissRequest = { viewModel.resetState() },
+                title = { Text("Errore", color = MaterialTheme.colorScheme.error) },
+                text = { Text((uiState as VoiceUiState.Error).message) },
+                confirmButton = {
+                    Button(onClick = { viewModel.resetState() }) {
+                        Text("Riprova")
+                    }
+                }
+            )
+        }
+        else -> Unit
     }
 
     Scaffold(
@@ -167,11 +195,22 @@ fun VoiceRegistrationScreen() {
                 val minutes = recordingDuration / 60
                 val seconds = recordingDuration % 60
                 Text(
-                    text = String.format("%02d:%02d", minutes, seconds),
+                    text = String.format(Locale.ITALIAN, "%02d:%02d", minutes, seconds),
                     style = MaterialTheme.typography.headlineMedium,
                     fontWeight = androidx.compose.ui.text.font.FontWeight.Bold,
                     color = MaterialTheme.colorScheme.error
                 )
+            } else if (uiState is VoiceUiState.Processing) {
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    CircularProgressIndicator()
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        "L'Intelligenza Artificiale sta elaborando il tuo audio...",
+                        color = MaterialTheme.colorScheme.primary,
+                        style = MaterialTheme.typography.bodyMedium,
+                        textAlign = TextAlign.Center
+                    )
+                }
             } else {
                 Text(
                     text = "Comunica gli orari, i cantieri e lo stato dei lavori. Rilascia il tasto per far trascrivere all'IA.",
@@ -184,7 +223,6 @@ fun VoiceRegistrationScreen() {
 
             Spacer(modifier = Modifier.height(48.dp))
 
-            // Animazione del bottone del microfono durante la registrazione
             val infiniteTransition = rememberInfiniteTransition()
             val scale by infiniteTransition.animateFloat(
                 initialValue = 1f,
@@ -202,14 +240,15 @@ fun VoiceRegistrationScreen() {
                     .clip(CircleShape)
                     .background(
                         if (isRecording) MaterialTheme.colorScheme.errorContainer
+                        else if (uiState is VoiceUiState.Processing) MaterialTheme.colorScheme.surfaceVariant
                         else MaterialTheme.colorScheme.primaryContainer
                     )
                     .pointerInput(Unit) {
                         detectTapGestures(
                             onPress = {
-                                if (hasPermission) {
+                                if (hasPermission && uiState !is VoiceUiState.Processing) {
                                     startRecording()
-                                    tryAwaitRelease() // Attende finché il dito non viene alzato
+                                    tryAwaitRelease()
                                     stopRecording()
                                 }
                             }
@@ -221,18 +260,10 @@ fun VoiceRegistrationScreen() {
                     imageVector = Icons.Default.Mic,
                     contentDescription = "Microfono",
                     modifier = Modifier.size(72.dp),
-                    tint = if (isRecording) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary
+                    tint = if (isRecording) MaterialTheme.colorScheme.error
+                           else if (uiState is VoiceUiState.Processing) MaterialTheme.colorScheme.onSurfaceVariant
+                           else MaterialTheme.colorScheme.primary
                 )
-            }
-
-            if (audioFile != null && !isRecording) {
-                Spacer(modifier = Modifier.height(32.dp))
-                Text(
-                    text = "Audio pronto per l'analisi.",
-                    color = Color.Green,
-                    style = MaterialTheme.typography.bodySmall
-                )
-                // Questo testo scomparirà quando implementeremo l'invio all'API
             }
         }
     }
