@@ -38,6 +38,7 @@ data class ChatChoice(
 )
 
 interface GroqApi {
+    @retrofit2.http.Multipart
     @POST("audio/transcriptions")
     suspend fun transcribeAudio(
         @retrofit2.http.Part file: okhttp3.MultipartBody.Part,

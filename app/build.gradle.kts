@@ -7,11 +7,11 @@ plugins {
     id("org.jetbrains.kotlin.android")
 }
 
-// Carica le properties locali
-val localProperties = Properties()
-val localPropertiesFile = rootProject.file("local.properties")
-if (localPropertiesFile.exists()) {
-    localProperties.load(localPropertiesFile.inputStream())
+// Carica le properties personalizzate
+val secretProperties = Properties()
+val secretPropertiesFile = rootProject.file("secrets.properties")
+if (secretPropertiesFile.exists()) {
+    secretProperties.load(secretPropertiesFile.inputStream())
 }
 
 android {
@@ -28,7 +28,7 @@ android {
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
         // Passa la chiave a BuildConfig
-        buildConfigField("String", "GROQ_API_KEY", "\"${localProperties.getProperty("GROQ_API_KEY", "")}\"")
+        buildConfigField("String", "GROQ_API_KEY", "\"${secretProperties.getProperty("GROQ_API_KEY", "")}\"")
     }
 
     buildTypes {
