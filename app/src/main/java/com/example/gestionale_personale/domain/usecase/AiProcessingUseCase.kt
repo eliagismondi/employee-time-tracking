@@ -68,10 +68,10 @@ class AiProcessingUseCase {
             val systemPrompt = buildSystemPrompt(activeEmployees)
 
             val chatRequest = ChatRequest(
-                model = "llama-3.3-70b-versatile", // Modello più potente per il parsing
+                model = "qwen/qwen3.8-27b", // Modello disponibile in EU su Groq
                 messages = listOf(
                     ChatMessage(role = "system", content = systemPrompt),
-                    ChatMessage(role = "user", content = "Testo: $transcription")
+                    ChatMessage(role = "user", content = "Testo (devi restituire output JSON): $transcription")
                 ),
                 response_format = ResponseFormat(type = "json_object"),
                 temperature = 0.0 // Massimo determinismo
