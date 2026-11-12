@@ -4,11 +4,6 @@ import retrofit2.http.Body
 import retrofit2.http.Headers
 import retrofit2.http.POST
 
-data class GroqRequest(
-    val model: String = "whisper-large-v3",
-    val file: okhttp3.MultipartBody.Part
-)
-
 data class ChatRequest(
     val model: String = "llama-3.1-8b-instant",
     val messages: List<ChatMessage>,

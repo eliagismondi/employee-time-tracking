@@ -86,6 +86,9 @@ class AiProcessingUseCase {
             val result = parseJsonResult(jsonString)
             Pair(result.first, result.second)
 
+        } catch (e: retrofit2.HttpException) {
+             Log.e("AiUseCase", "Errore HTTP durante l'elaborazione AI: ${e.code()} - ${e.message()}", e)
+             Pair("Errore di connessione (HTTP ${e.code()}). Verifica che la tua chiave API sia valida e con permessi attivi.", emptyList())
         } catch (e: Exception) {
             Log.e("AiUseCase", "Errore durante l'elaborazione AI", e)
             Pair("Errore di connessione o elaborazione AI: ${e.message}", emptyList())
