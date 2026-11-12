@@ -68,7 +68,7 @@ class AiProcessingUseCase {
             val systemPrompt = buildSystemPrompt(activeEmployees)
 
             val chatRequest = ChatRequest(
-                model = "llama-3.1-8b-instant",
+                model = "llama-3.3-70b-versatile", // Modello più potente per il parsing
                 messages = listOf(
                     ChatMessage(role = "system", content = systemPrompt),
                     ChatMessage(role = "user", content = "Testo: $transcription")
